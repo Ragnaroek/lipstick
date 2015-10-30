@@ -1,0 +1,11 @@
+
+
+
+- Konstruktoren löschen, deren Text bestimmte pattern enthält
+
+- @Nonnull und @Nullable durch @ParametersAreNonNullByDefault ersetzen
+
+- Unnötigen Whitespace entfernen
+
+
+- redundant modifier umschreiben
