@@ -1,8 +1,16 @@
-(ns lipstick.ast.query)
+(ns lipstick.ast.query
+  (:use lipstick.ast.visitor.visitors))
+
+(defn run-visitor [visitor node]
+  (. node accept visitor)
+  visitor)
 
 (defn type-declarations [cu]
-  cu
+  (. (run-visitor (new TypeDeclVisitor) cu) getTypes))
 
-  ;TODO visitor implementieren, der TypeDecls aufsammelt!!
+(defn constructors [types]
+  (let [visitor (new ConstructorVisitor)]
+    (doall (map (partial run-visitor visitor) types))
+    (. visitor getConstructors)))
 
-)
+; TODO JavaDoc aus Knoten rausziehen
