@@ -1,9 +1,13 @@
 (ns lipstick.ast.query
   (:use lipstick.ast.visitor.visitors))
 
-(defn run-visitor [visitor node]
+(defn- run-visitor [visitor node]
   (. node accept visitor)
   visitor)
+
+(defn compilation-unit [file-name]
+  (. (new de.defmacro.ast.JavaParser) parseCompilationUnit
+  (new java.io.File file-name)))
 
 (defn type-declarations [cu]
   (. (run-visitor (new TypeDeclVisitor) cu) getTypes))
@@ -13,4 +17,7 @@
     (doall (map (partial run-visitor visitor) types))
     (. visitor getConstructors)))
 
-; TODO JavaDoc aus Knoten rausziehen
+(defn javadoc [nodes]
+  (let [visitor (new JavaDocVisitor)]
+    (doall (map (partial run-visitor visitor) nodes))
+    (. visitor get)))

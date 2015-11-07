@@ -2,9 +2,8 @@
   (:use lipstick.ast.query))
 
 (defn foo []
-  (println "constructors" (. (constructors (type-declarations
-    (. (new de.defmacro.ast.JavaParser) parseCompilationUnit
-    (new java.io.File "/Users/mb/SmsAdvertisingElementServiceImpl.java")))) size)))
+  (println "docs" (map (fn [n] (. n toString)) (javadoc (constructors (type-declarations
+    (compilation-unit "/Users/mb/SmsAdvertisingElementServiceImpl.java")))))))
 
 (defn -main [& args]
    (foo))

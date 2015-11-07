@@ -1,5 +1,30 @@
 (ns lipstick.ast.visitor.visitors)
 
+(defn- prefix-name [prefix]
+   (str "-" prefix "-"))
+
+(defmacro gen-collector [name prefix type]
+  `(do
+    (gen-class
+      :extends org.eclipse.jdt.core.dom.ASTVisitor
+      :name ~name
+      :prefix ~(symbol (prefix-name prefix))
+      :state ~'state
+      :init ~'init
+      :methods [[~'visit [~'Object] ~'boolean]
+              [~'get [] java.util.List]])
+
+    (defn- ~(symbol (str (prefix-name prefix) "init")) ([] [[] (atom [])]))
+
+    (defn- ~(symbol (str (prefix-name prefix) "visit-" type)) [~'this ~'o]
+      (swap! (.state ~'this) conj ~'o)
+      true)
+
+    (defn- ~(symbol (str (prefix-name prefix) "get")) [~'this]
+      @(.state ~'this))))
+
+(gen-collector JavaDocVisitor "javadoc" Javadoc)
+
 (gen-class
   :extends org.eclipse.jdt.core.dom.ASTVisitor
   :name TypeDeclVisitor

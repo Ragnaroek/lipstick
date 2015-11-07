@@ -1,11 +1,17 @@
 
-
-
 - Konstruktoren löschen, deren Text bestimmte pattern enthält
+--- Statistik über alle Konstruktor-JavaDocs sammeln!
+
+    Identifier   Remove?   Count   Javadoc
+    <hash>           [x]   456     /** Konstruktor **/
+    <hash>           []    345     /** Ctor. **/
+    ...
+
+
+
 
 - @Nonnull und @Nullable durch @ParametersAreNonNullByDefault ersetzen
 
 - Unnötigen Whitespace entfernen
-
 
 - redundant modifier umschreiben
