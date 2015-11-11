@@ -1,5 +1,5 @@
 
-public class SimpleJavaDoc {
+public class Simple {
   /**
    * Konstruktor.
    **/
