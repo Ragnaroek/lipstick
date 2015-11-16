@@ -5,7 +5,8 @@
 ;TODO Move comment stuff to separate module
 ;TODO argument parser
 
-;TODO Calc hashcode for javadoc
+;TODO read interactive input file
+;TODO write input file back to code
 
 (defn +? [a b]
   (cond
@@ -16,29 +17,31 @@
 (defn count-distinct [docs]
   (reduce (fn [m doc] (update m doc (partial +? 1))) {} docs))
 
-(defn to-str-without-newline [javadocs]
-  (map (fn [javadoc]
-          (string/replace (. javadoc toString) #"\n" "")) javadocs))
+(defn to-str-without-newline [javadoc]
+  (string/replace (. javadoc toString) #"\n" ""))
+
+(defn extract-one-line-comment-and-hashcode [javadoc]
+  (let [javadoc-string (. javadoc toString)]
+    [(. javadoc-string hashCode) (to-str-without-newline javadoc-string)]))
 
 (defn constructor-javadocs [file]
-  (to-str-without-newline (-> (compilation-unit file) type-declarations constructors javadoc)))
+  (map extract-one-line-comment-and-hashcode (-> (compilation-unit file) type-declarations constructors javadoc)))
 
 (defn convert-to-string [result]
-  (string/join "\n" (map #(str "[]\t" (second %) "\t" (first %)) result)))
+  (string/join "\n" (map #(str (format "%10d" (first (first %))) "\tconstructor\t[]\t" (second %) "\t" (second (first %))) result)))
 
-;(defn save-to-file [result]
-;      (spit (convert-to-string result))))
+(defn save-to-file [str]
+  ;TODO file as parameter
+  (spit "/Users/mb/lipstick-constructors.txt" str))
 
-(defn foo []
+(defn extract-comments []
+  ;TODO input file as parameter
   (let [docs (count-distinct
-                (flatten
-                  (fs/walk (fn [r d fs]
-                              (mapcat (fn [f]
-                                        (when (. f endsWith ".java")
-                                            (constructor-javadocs (str r "/" f)))) fs)) "/Users/mb/projekte/hunter-deploy/src/main/java/com/freiheit/commons/collections")))]
-
-      (println (convert-to-string (sort #(- (second %2) (second %)) (seq docs))))))
-
+                (apply concat (fs/walk (fn [r d fs]
+                                        (mapcat (fn [f]
+                                                  (when (. f endsWith ".java")
+                                                    (constructor-javadocs (str r "/" f)))) fs)) "/Users/mb/projekte/hunter-deploy/src/main/java/")))]
+      (save-to-file (convert-to-string (sort #(- (second %2) (second %)) (seq docs))))))
 
 (defn -main [& args]
-   (foo))
+   (extract-comments))
