@@ -12,7 +12,7 @@
       :state ~'state
       :init ~'init
       :methods [[~'visit [~'Object] ~'boolean]
-              [~'get [] java.util.List]])
+                [~'get [] java.util.List]])
 
     (defn- ~(symbol (str (prefix-name prefix) "init")) ([] [[] (atom [])]))
 
