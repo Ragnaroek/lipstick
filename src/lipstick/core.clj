@@ -3,7 +3,6 @@
   (:use lipstick.ast.query))
 
 ;TODO Move comment stuff to separate module
-;TODO argument parser
 
 ;TODO read interactive input file
 ;TODO write input file back to code
@@ -24,19 +23,25 @@
   (let [javadoc-string (. javadoc toString)]
     [(. javadoc-string hashCode) (to-str-without-newline javadoc-string)]))
 
+(defn all-constructor-javadocs-of-file [file]
+  (-> (compilation-unit file) type-declarations constructors javadoc))
+
 (defn constructor-javadocs [file]
-  (map extract-one-line-comment-and-hashcode (-> (compilation-unit file) type-declarations constructors javadoc)))
+  (map extract-one-line-comment-and-hashcode (all-constructor-javadocs-of-file file)))
 
 (defn convert-to-string [result]
   (string/join "\n" (map #(str (format "%10d" (first (first %))) "\tconstructor\t[]\t" (second %) "\t" (second (first %))) result)))
 
+(defn walk-javafiles-with [f path]
+  (apply concat (fs/walk (fn [r d fs]
+                            (mapcat (fn [file]
+                                      (when (. file endsWith ".java")
+                                          (f (str r "/" file)))) fs)) path)))
+
 (defn extract-comments [path out-file]
-  (let [docs (count-distinct
-                (apply concat (fs/walk (fn [r d fs]
-                                        (mapcat (fn [f]
-                                                  (when (. f endsWith ".java")
-                                                    (constructor-javadocs (str r "/" f)))) fs)) path)))]
-      (spit out-file (convert-to-string (sort #(- (second %2) (second %)) (seq docs))))))
+  (let [docs (walk-javafiles-with constructor-javadocs path)
+        distinct (count-distinct docs)]
+    (spit out-file (convert-to-string (sort #(- (second %2) (second %)) (seq distinct))))))
 
 (defn print-usage-and-exit []
   (println "Usage:")
@@ -52,14 +57,38 @@
   (= str "[x]"))
 
 (defn parse-interactive-input-line [line]
-  (let [line-parts (string/split line #"\t")]
-    ;TODO reduce assoc-if selected?
-    (println (nth line-parts 0) (nth line-parts 2) (selected? (nth line-parts 2)))))
+  (string/split line #"\t"))
+
+(defn add-hash-to-delete [s line]
+    (let [parsed (parse-interactive-input-line line)]
+      (if (selected? (nth parsed 2))
+        (conj s (Integer/parseInt (nth parsed 0)))
+        s)))
+
+(defn hashes-to-delete [interactive-input]
+  (with-open [rdr (io/reader interactive-input)]
+    (reduce add-hash-to-delete #{} (line-seq rdr))))
+
+; removes this javadoc from its parent
+(defn remove-javadoc! [javadoc]
+  (. (. javadoc getParent) setJavadoc nil))
+
+(defn write-back-file! [cu file]
+  (let [doc (new org.eclipse.jface.text.Document (slurp file))]
+    (. (. cu rewrite doc nil) apply doc)
+    (spit file (. doc get))))
+
+(defn remove-constructor-and-rewrite-file [to-delete file]
+  (let [cu (compilation-unit file)]
+    (. cu recordModifications)
+    (doseq [javadoc (-> cu type-declarations constructors javadoc)]
+      (when (contains? to-delete (. (. javadoc toString) hashCode))
+        (remove-javadoc! javadoc)
+        (write-back-file! cu file)))))
 
 (defn do-javadoc-modify [[path interactive-input]]
-  (with-open [rdr (io/reader interactive-input)]
-    (doseq [line (line-seq rdr)]
-      (parse-interactive-input-line line))))
+  (let [to-delete (hashes-to-delete interactive-input)]
+    (walk-javafiles-with (partial remove-constructor-and-rewrite-file to-delete) path)))
 
 (defn do-javadoc [[sub-command & args]]
   (cond
