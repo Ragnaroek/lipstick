@@ -7,7 +7,11 @@
 
 (defn compilation-unit [file-name]
   (. (new de.defmacro.ast.JavaParser) parseCompilationUnit
-  (new java.io.File file-name)))
+   (new java.io.File file-name)))
+
+(defn compilation-unit-from-string [str]
+  (. (new de.defmacro.ast.JavaParser) parseCompilationUnit str))
+
 
 (defn type-declarations [cu]
   (. (run-visitor (new TypeDeclVisitor) cu) getTypes))

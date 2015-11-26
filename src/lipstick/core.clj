@@ -4,9 +4,6 @@
 
 ;TODO Move comment stuff to separate module
 
-;TODO read interactive input file
-;TODO write input file back to code
-
 (defn +? [a b]
   (cond
     (not a) b
@@ -33,10 +30,10 @@
   (string/join "\n" (map #(str (format "%10d" (first (first %))) "\tconstructor\t[]\t" (second %) "\t" (second (first %))) result)))
 
 (defn walk-javafiles-with [f path]
-  (apply concat (fs/walk (fn [r d fs]
-                            (mapcat (fn [file]
-                                      (when (. file endsWith ".java")
-                                          (f (str r "/" file)))) fs)) path)))
+  (apply concat (doall (fs/walk (fn [r d fs]
+                                   (mapcat (fn [file]
+                                              (when (. file endsWith ".java")
+                                                  (f (str r "/" file)))) fs)) path))))
 
 (defn extract-comments [path out-file]
   (let [docs (walk-javafiles-with constructor-javadocs path)
@@ -62,7 +59,7 @@
 (defn add-hash-to-delete [s line]
     (let [parsed (parse-interactive-input-line line)]
       (if (selected? (nth parsed 2))
-        (conj s (Integer/parseInt (nth parsed 0)))
+        (conj s (Integer/parseInt (. (nth parsed 0) trim)))
         s)))
 
 (defn hashes-to-delete [interactive-input]
@@ -71,20 +68,25 @@
 
 ; removes this javadoc from its parent
 (defn remove-javadoc! [javadoc]
-  (. (. javadoc getParent) setJavadoc nil))
+  (when (not (= nil (. javadoc getParent)))
+    (. (. javadoc getParent) setJavadoc nil)))
 
-(defn write-back-file! [cu file]
-  (let [doc (new org.eclipse.jface.text.Document (slurp file))]
+(defn write-back-file! [cu file content]
+  ;We have to use the original string content that was used to build the compilation-unit
+  ;otherwise rewrite throws exceptions
+  (let [doc (new org.eclipse.jface.text.Document content)]
     (. (. cu rewrite doc nil) apply doc)
     (spit file (. doc get))))
 
 (defn remove-constructor-and-rewrite-file [to-delete file]
-  (let [cu (compilation-unit file)]
+  (println "Removing from file:" file)
+  (let [content (slurp file)
+        cu (compilation-unit-from-string content)]
     (. cu recordModifications)
     (doseq [javadoc (-> cu type-declarations constructors javadoc)]
       (when (contains? to-delete (. (. javadoc toString) hashCode))
         (remove-javadoc! javadoc)
-        (write-back-file! cu file)))))
+        (write-back-file! cu file content)))))
 
 (defn do-javadoc-modify [[path interactive-input]]
   (let [to-delete (hashes-to-delete interactive-input)]
