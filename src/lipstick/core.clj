@@ -1,6 +1,6 @@
 (ns lipstick.core
   (:require [clojure.string :as string] [clojure.java.io :as io] [me.raynes.fs :as fs])
-  (:use lipstick.ast.query))
+  (:use lipstick.ast.query lipstick.files))
 
 ;TODO Move comment stuff to separate module
 
@@ -28,12 +28,6 @@
 
 (defn convert-to-string [result]
   (string/join "\n" (map #(str (format "%10d" (first (first %))) "\tconstructor\t[]\t" (second %) "\t" (second (first %))) result)))
-
-(defn walk-javafiles-with [f path]
-  (apply concat (doall (fs/walk (fn [r d fs]
-                                   (mapcat (fn [file]
-                                              (when (. file endsWith ".java")
-                                                  (f (str r "/" file)))) fs)) path))))
 
 (defn extract-comments [path out-file]
   (let [docs (walk-javafiles-with constructor-javadocs path)
