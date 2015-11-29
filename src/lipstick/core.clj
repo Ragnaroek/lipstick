@@ -1,20 +1,8 @@
 (ns lipstick.core
   (:require [clojure.string :as string] [clojure.java.io :as io] [me.raynes.fs :as fs])
-  (:use lipstick.ast.query lipstick.files))
+  (:use lipstick.ast.query lipstick.files lipstick.util))
 
 ;TODO Move comment stuff to separate module
-
-(defn +? [a b]
-  (cond
-    (not a) b
-    (not b) a
-    :else (+ a b)))
-
-(defn count-distinct [docs]
-  (reduce (fn [m doc] (update m doc (partial +? 1))) {} docs))
-
-(defn to-str-without-newline [javadoc]
-  (string/replace (. javadoc toString) #"\n" ""))
 
 (defn extract-one-line-comment-and-hashcode [javadoc]
   (let [javadoc-string (. javadoc toString)]
