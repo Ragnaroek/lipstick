@@ -2,7 +2,6 @@
   (:require [clojure.test :refer :all]
             [lipstick.ast.query :refer :all]))
 
-
 (deftest should-collect-types-in-simple-file
   (let [type (first (type-declarations (compilation-unit "test/lipstick/testfiles/Simple.java")))]
     (is (= (. (. type getName) getIdentifier) "Simple"))))

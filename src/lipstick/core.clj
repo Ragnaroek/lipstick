@@ -1,26 +1,8 @@
 (ns lipstick.core
   (:require [clojure.string :as string] [clojure.java.io :as io] [me.raynes.fs :as fs])
-  (:use lipstick.ast.query lipstick.files lipstick.util))
+  (:use lipstick.ast.query lipstick.files lipstick.util lipstick.sticks.javadoc))
 
 ;TODO Move comment stuff to separate module
-
-(defn extract-one-line-comment-and-hashcode [javadoc]
-  (let [javadoc-string (. javadoc toString)]
-    [(. javadoc-string hashCode) (to-str-without-newline javadoc-string)]))
-
-(defn all-constructor-javadocs-of-file [file]
-  (-> (compilation-unit file) type-declarations constructors javadoc))
-
-(defn constructor-javadocs [file]
-  (map extract-one-line-comment-and-hashcode (all-constructor-javadocs-of-file file)))
-
-(defn convert-to-string [result]
-  (string/join "\n" (map #(str (format "%10d" (first (first %))) "\tconstructor\t[]\t" (second %) "\t" (second (first %))) result)))
-
-(defn extract-comments [path out-file]
-  (let [docs (walk-javafiles-with constructor-javadocs path)
-        distinct (count-distinct docs)]
-    (spit out-file (convert-to-string (sort #(- (second %2) (second %)) (seq distinct))))))
 
 (defn print-usage-and-exit []
   (println "Usage:")
@@ -30,7 +12,7 @@
 
 (defn do-javadoc-interactive [[path out-file]]
   (when (or (not path) (not out-file)) (print-usage-and-exit))
-  (extract-comments path out-file))
+  (write-histogram (constructor-javadoc-histogram path) out-file))
 
 (defn selected? [str]
   (= str "[x]"))

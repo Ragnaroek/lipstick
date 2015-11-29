@@ -12,9 +12,9 @@
       :state ~'state
       :init ~'init
       :methods [[~'visit [~'Object] ~'boolean]
-                [~'get [] java.util.List]])
+                [~'get [] java.util.Set]])
 
-    (defn- ~(symbol (str (prefix-name prefix) "init")) ([] [[] (atom [])]))
+    (defn- ~(symbol (str (prefix-name prefix) "init")) ([] [[] (atom #{})]))
 
     (defn- ~(symbol (str (prefix-name prefix) "visit-" type)) [~'this ~'o]
       (swap! (.state ~'this) conj ~'o)
@@ -32,9 +32,9 @@
   :state typeList
   :init init
   :methods [[visit [Object] boolean]
-            [getTypes [] java.util.List]])
+            [getTypes [] java.util.Set]])
 
-(defn- -typedecl-init ([] [[] (atom [])]))
+(defn- -typedecl-init ([] [[] (atom #{})]))
 
 (defn- add-type [this decl]
    (swap! (.typeList this) conj decl))
@@ -58,9 +58,9 @@
   :state constList
   :init init
   :methods [[visit [Object] boolean]
-            [getConstructors [] java.util.List]])
+            [getConstructors [] java.util.Set]])
 
-(defn- -constructor-init ([] [[] (atom [])]))
+(defn- -constructor-init ([] [[] (atom #{})]))
 
 (defn- add-constructor [this method]
   (swap! (.constList this) conj method))
