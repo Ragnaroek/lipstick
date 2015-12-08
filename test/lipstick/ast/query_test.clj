@@ -8,7 +8,7 @@
 
 (deftest should-collect-types-in-nested-file
   (let [types (type-declarations (compilation-unit "test/lipstick/testfiles/NestedClass.java"))]
-    (is (= (map (fn [type] (. (. type getName) getIdentifier)) types) ["NestedClass" "Nested"]))))
+    (is (= (set (map (fn [type] (. (. type getName) getIdentifier)) types)) (set ["NestedClass" "Nested"])))))
 
 ; TODO Write some tests for constructors
 ; TODO Write some tests for Javadocs
