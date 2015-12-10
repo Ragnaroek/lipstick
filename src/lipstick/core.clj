@@ -1,11 +1,12 @@
 (ns lipstick.core
   (:require [clojure.string :as string])
-  (:use lipstick.ast.query lipstick.files lipstick.util lipstick.sticks.javadoc))
+  (:use lipstick.ast.query lipstick.files lipstick.util lipstick.sticks.javadoc lipstick.sticks.total-file-mapping))
 
 (defn print-usage-and-exit []
   (println "Usage:")
   (println "\tlipstick javadoc interactive <path> <out-file> -- read all constructor javadocs in <path> and dump to file <out-file>")
   (println "\tlipstick javadoc modify <path> <interactive-input> -- modify constructor javadocs in <path> with <interactive-input> file as input")
+  (println "\ttotal-file-mapping <source-folder> <source-ending> <target-folder> <target-ending> <source-exclude-pattern> -- find unreferenced files")
   (System/exit -1))
 
 (defn do-javadoc-interactive [[path out-file]]
@@ -22,11 +23,15 @@
     (= sub-command "modify") (do-javadoc-modify args)
     :else (print-usage-and-exit)))
 
+(defn do-total-filemapping [[source-folder source-ending target-folder target-ending & excludes]]
+  (total-file-mapping source-folder source-ending target-folder target-ending excludes))
+
 (defn -main [& args]
   ;TODO use argument parser
   (let [[command & command-args] args]
     (cond
         (= command "javadoc") (do-javadoc command-args)
+        (= command "total-file-mapping") (do-total-filemapping command-args)
         :else (print-usage-and-exit))))
 
 ;lein run javadoc interactive "/Users/mb/projekte/hunter-deploy/src/main/java/com/freiheit/common" "/Users/mb/_lipstick.txt"
